@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 from torchvision import datasets
 # torchvision.datasets module includes datasets for many real-world vision data like CIFAR, COCO etc.
 from torchvision.transforms import ToTensor
+import torch.nn as nn
 
 # In this practice, we will use the FashionMNIST dataset.
 
@@ -38,3 +39,38 @@ for X,y in test_dataloader:
     print(f"Shape of X [N, C, H, W]: {X.shape}")
     print(f"Shape of y: {y.shape} {y.dtype}")
     break
+
+# Use GPU if available
+device = torch.device("cuda") if torch.cuda.is_available else torch.device("cpu")
+# device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"  in newer pytorch versions
+print(f"Using {device}")
+
+# Creating the neural network
+class NeuralNetwork(nn.Module):
+    # The constructor
+    def __init__(self):
+        super().__init__()
+        # Flatten 2D pixels (28*28 for example) into 1D (784)
+        self.flatten = nn.Flatten()
+        # Self keyword causes the created layers to be stored inside here, without it they would be just temporary variables.
+        self.linear_relu_stack = nn.Sequential(
+            # First layer, transform 784 pixels to 512 with weights and biases
+            nn.Linear(28*28, 512),
+            # If the data is positive leave it as it is. If not, make them 0. Thus, add non-linearity to model and allow it to handle more complex operations.
+            nn.ReLU(),
+            # Second layer
+            nn.Linear(512,512),
+            nn.ReLU(),
+            # Third layer
+            nn.Linear(512,10)
+        )
+
+    def forward(self, x):
+        # This code translates to "Go find the flatten layer I created and pass the data x through it"
+        x = self.flatten(x)
+        # This code translated to "Now go find the linear_relu_stack and pass the data x through it"
+        logits = self.linear_relu_stack(x)
+        return logits
+
+model = NeuralNetwork().to(device)
+print(model)
