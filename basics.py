@@ -26,3 +26,15 @@ test_data = datasets.FashionMNIST(
     transform=ToTensor(),
 )
 
+# Creating dataloaders so that it wraps an iterable around the dataset and we can work on it easily.
+
+batch_size = 64 
+# This means each element in the dataloader iterable will return a batch of 64 features and labels.
+
+train_dataloader = DataLoader(training_data, batch_size=batch_size)
+test_dataloader = DataLoader(test_data, batch_size=batch_size)
+
+for X,y in test_dataloader:
+    print(f"Shape of X [N, C, H, W]: {X.shape}")
+    print(f"Shape of y: {y.shape} {y.dtype}")
+    break
