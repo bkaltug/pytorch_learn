@@ -72,81 +72,116 @@ class NeuralNetwork(nn.Module):
         logits = self.linear_relu_stack(x)
         return logits
 
-# model = NeuralNetwork().to(device)
-# print(model)
-
-# # Optimizing the parameters
-
-# loss_func = nn.CrossEntropyLoss()
-# optimizer = torch.optim.SGD(model.parameters(),lr= 1e-3)
-
-# def train(dataloader, model, loss_func, optimizer):
-#     size = len(dataloader.dataset)
-#     model.train()
-#     for batch, (X, y) in enumerate(dataloader):
-#         X,y = X.to(device), y.to(device)
-
-#         # Prediction error
-#         pred = model(X)
-#         loss = loss_func(pred, y)
-
-#         # Backpropagation
-#         loss.backward()
-#         optimizer.step()
-#         optimizer.zero_grad()
-
-#         if batch % 100 == 0:
-#             loss, current = loss.item(), (batch + 1) * len(X)
-#             print(f"loss: {loss:>7f} [{current:>5d}/{size:>5d}]")
-
-# def test(dataloader, model, loss_func):
-#     size = len(dataloader.dataset)
-#     num_batches = len(dataloader)
-#     model.eval()
-#     test_loss, correct = 0,0
-#     with torch.no_grad():
-#         for X,y in dataloader:
-#             X,y = X.to(device), y.to(device)
-#             pred = model(X)
-#             test_loss += loss_func(pred,y).item()
-#             correct += (pred.argmax(1)== y).type(torch.float).sum().item()
-#     test_loss /= num_batches
-#     correct /= size
-#     print(f"Test error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
-
-# epochs = 5
-# for t in range(epochs):
-#     print(f"Epoch{t+1}\n--------------------------------")
-#     train(train_dataloader,model,loss_func,optimizer)
-#     test(test_dataloader,model, loss_func)
-#     print("Done!") 
-
-# # Saving the trained model
-# torch.save(model.state_dict(),"model.pth")
-# print("Saved PyTorch model state to model.pth")
-
-# Loading the saved model
 model = NeuralNetwork().to(device)
-model.load_state_dict(torch.load("model.pth",weights_only=True))
+print(model)
 
-# Use the model to make predictions
-classes = [
-        "T-shirt/top",
-    "Trouser",
-    "Pullover",
-    "Dress",
-    "Coat",
-    "Sandal",
-    "Shirt",
-    "Sneaker",
-    "Bag",
-    "Ankle boot",
-]
+# Optimizing the parameters
 
-model.eval()
-x, y = test_data[0][0], test_data[0][1]
-with torch.no_grad():
-    x = x.to(device)
-    pred = model(x)
-    predicted, actual = classes[pred[0].argmax(0)], classes[y]
-    print(f"Predicted: {predicted}, Actual: {actual}")
+# Loss function (criterion). Measures how wrong our prediction is compared to the real value.
+loss_func = nn.CrossEntropyLoss()
+# Optimizer is the judge. It detects how wrong the model is and corrects the values respectively.
+# SGD = Stochastic Gradient Descent
+# 1e-3 = 0.001
+optimizer = torch.optim.SGD(model.parameters(),lr= 1e-3)
+
+def train(dataloader, model, loss_func, optimizer):
+    size = len(dataloader.dataset)
+    # Sets the model into training mode
+    model.train()
+    # Training loop. Training 60000 images one batch at a time.
+    # batch = batch number (0,1,2...), X = the batch of images (a tensor of shape [64,1,28,28]), y = batch of correct labels(a tensor of shape 64)
+    # x,y in enumerate = x is the indexes in the dataloader and y is the corrresponding labels.
+    for batch, (X, y) in enumerate(dataloader):
+        X,y = X.to(device), y.to(device)
+
+        # Prediction error
+        # What is done here is basically run x, index = 0 for example through the model and store the output at pred.
+        pred = model(X)
+        # Then compare it to the label(y) related to out prediction and store the loss amount.
+        loss = loss_func(pred, y)
+
+        # Backpropagation
+        # This function automatically calculates the gradient (the blame) for each parameter. It calculates how much each weight and bias contributed to the final loss.
+        loss.backward()
+        # This function uses the losses calculated by the loss.backward() and changes the parameters slightly according to the learning rate.
+        optimizer.step()
+        # Resets all of the gradients before the next step.
+        optimizer.zero_grad()
+
+        # Printing status update each 100 batches.
+        if batch % 100 == 0:
+            loss, current = loss.item(), (batch + 1) * len(X)
+            print(f"loss: {loss:>7f} [{current:>5d}/{size:>5d}]")
+
+# Here we are only testing (checking) the model, thus there is no optimizer and no updating weights.
+def test(dataloader, model, loss_func):
+    
+    # Getting size to calculate overall accuracy. (8500/10000 for example)
+    size = len(dataloader.dataset)
+    # Getting the size of the batches to calculate average loss per batch.
+    num_batches = len(dataloader)
+    # Setting the model from training to evaluating mode.
+    model.eval()
+    # Initializing variables. test_loss stores loss from every single batch and correct stores every single prediction.
+    test_loss, correct = 0,0
+
+    # Use with keyword when connecting databases or handling files.
+    # We are using no_grad() because since we are not training here, we are don't have to apply any backpropagation. We are just testing and seeing the results
+    with torch.no_grad():
+        for X,y in dataloader:
+            X,y = X.to(device), y.to(device)
+            # Forward pass
+            pred = model(X)
+            # Calculates the loss for this batch and adding it's .item() value to test_loss.
+            # We are using .item() to get the number out of the tensor thus prevent memory from building up.
+            test_loss += loss_func(pred,y).item()
+            # This line counts how many of them did we get correct.
+            # Pred has a shape like [64,10]. pred.argmax(1) finds the index with the highest score (index from 0 to 9) from the batch and takes it as the final guess.
+            # ==y operation compares the tensor of guesses which looks like [7,2,9] for example. If the ture y label is [7,2,1] it returns [True, True, False]
+            # .type(torch.float) converts the true and false values into 1.0 and 0.0
+            # .sum() adds up the 1.0 values and .item() converts these into plain python values like 2.
+            # Lastly it adds this batches correctness value to the total.
+            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+    # To calculate average loss per batch
+    test_loss /= num_batches
+    # To calculate the accuracy percentage
+    correct /= size
+    print(f"Test error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
+
+# Applying the created functions.
+epochs = 5
+for t in range(epochs):
+    print(f"Epoch{t+1}\n--------------------------------")
+    train(train_dataloader,model,loss_func,optimizer)
+    test(test_dataloader,model, loss_func)
+    print("Done!") 
+
+# Saving the trained model
+torch.save(model.state_dict(),"model.pth")
+print("Saved PyTorch model state to model.pth")
+
+# # Loading the saved model
+# model = NeuralNetwork().to(device)
+# model.load_state_dict(torch.load("model.pth",weights_only=True))
+
+# # Use the model to make predictions
+# classes = [
+#         "T-shirt/top",
+#     "Trouser",
+#     "Pullover",
+#     "Dress",
+#     "Coat",
+#     "Sandal",
+#     "Shirt",
+#     "Sneaker",
+#     "Bag",
+#     "Ankle boot",
+# ]
+
+# model.eval()
+# x, y = test_data[0][0], test_data[0][1]
+# with torch.no_grad():
+#     x = x.to(device)
+#     pred = model(x)
+#     predicted, actual = classes[pred[0].argmax(0)], classes[y]
+#     print(f"Predicted: {predicted}, Actual: {actual}")
