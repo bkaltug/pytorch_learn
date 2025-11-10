@@ -160,28 +160,31 @@ for t in range(epochs):
 torch.save(model.state_dict(),"model.pth")
 print("Saved PyTorch model state to model.pth")
 
-# # Loading the saved model
-# model = NeuralNetwork().to(device)
-# model.load_state_dict(torch.load("model.pth",weights_only=True))
+# Loading the saved model
+model = NeuralNetwork().to(device)
+model.load_state_dict(torch.load("model.pth",weights_only=True))
 
-# # Use the model to make predictions
-# classes = [
-#         "T-shirt/top",
-#     "Trouser",
-#     "Pullover",
-#     "Dress",
-#     "Coat",
-#     "Sandal",
-#     "Shirt",
-#     "Sneaker",
-#     "Bag",
-#     "Ankle boot",
-# ]
+# Use the model to make predictions
+classes = [
+        "T-shirt/top",
+    "Trouser",
+    "Pullover",
+    "Dress",
+    "Coat",
+    "Sandal",
+    "Shirt",
+    "Sneaker",
+    "Bag",
+    "Ankle boot",
+]
 
-# model.eval()
-# x, y = test_data[0][0], test_data[0][1]
-# with torch.no_grad():
-#     x = x.to(device)
-#     pred = model(x)
-#     predicted, actual = classes[pred[0].argmax(0)], classes[y]
-#     print(f"Predicted: {predicted}, Actual: {actual}")
+model.eval()
+# Gets the first element of the database which has a shape (image_tensor (with shape [1,28,28]), label_integer)
+x, y = test_data[0][0], test_data[0][1]
+with torch.no_grad():
+    x = x.to(device)
+    # Forward pass, feeds the image x through all layers (flatten, linear, relu etc.)
+    pred = model(x)
+    # Get the outcome with the highest score, Ankle Boot here
+    predicted, actual = classes[pred[0].argmax(0)], classes[y]
+    print(f"Predicted: {predicted}, Actual: {actual}")
