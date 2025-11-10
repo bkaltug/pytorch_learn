@@ -95,7 +95,7 @@ def train(dataloader, model, loss_func, optimizer):
         X,y = X.to(device), y.to(device)
 
         # Prediction error
-        # What is done here is basically run x, index = 0 for example through the model and store the output at pred.
+        # What is done here is basically run x, index = 0 for example, through the model and store the output at pred.
         pred = model(X)
         # Then compare it to the label(y) related to out prediction and store the loss amount.
         loss = loss_func(pred, y)
@@ -157,12 +157,12 @@ for t in range(epochs):
     print("Done!") 
 
 # Saving the trained model
-torch.save(model.state_dict(),"model.pth")
-print("Saved PyTorch model state to model.pth")
+torch.save(model.state_dict(),"basics_saved_model.pth")
+print("Saved PyTorch model state to modebasics_saved_model.pth")
 
-# Loading the saved model
-model = NeuralNetwork().to(device)
-model.load_state_dict(torch.load("model.pth",weights_only=True))
+# # Loading the saved model
+# model = NeuralNetwork().to(device)
+# model.load_state_dict(torch.load("basics_saved_model.pth",weights_only=True))
 
 # Use the model to make predictions
 classes = [
